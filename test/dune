@@ -1,0 +1,2 @@
+(test (name test)
+ (libraries sociaml_oauth_client_v1_0a sociaml_oauth_client_posix))

@@ -1,5 +1,7 @@
 module type S = sig
   val add_authorization_header : 
+      ?timestamp : int ->
+      ?nonce : string ->
       ?body_parameters : (string * string) list ->
       ?callback : Uri.t  ->
       ?token : string ->
