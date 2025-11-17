@@ -1,0 +1,2 @@
+(library (name sociaml_oauth_client_posix)
+ (libraries cryptokit sociaml_oauth_client))

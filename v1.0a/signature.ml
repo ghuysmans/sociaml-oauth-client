@@ -75,7 +75,7 @@ module Make
     let rbuf = Buffer.create 16 in
     let buf_add = Buffer.add_string rbuf in
     buf_add "OAuth oauth_signature=\"";
-    MAC.result hmac |> B64.encode |> Util.pct_encode |> buf_add;
+    MAC.result hmac |> Base64.encode_exn |> Util.pct_encode |> buf_add;
     buf_add "\"";
     List.iter (fun (key, value) ->
         buf_add ",";

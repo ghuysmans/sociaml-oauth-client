@@ -42,7 +42,7 @@ module Make (Random : RANDOM) : S = struct
       in
       loop 0;
       Buffer.contents buf |> 
-      B64.encode |>
+      Base64.encode_exn |> (* FIXME add constraint *)
       Str.global_replace forbid ""
 
 end

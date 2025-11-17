@@ -1,0 +1,3 @@
+(library (name sociaml_oauth_client_v1_0a)
+ ;TODO constraint on cohttp, base64, OCaml (for Result)
+ (libraries cohttp-lwt-unix sociaml_oauth_client uri))

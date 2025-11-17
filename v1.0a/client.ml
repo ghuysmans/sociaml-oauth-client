@@ -27,13 +27,13 @@ module type S = sig
       consumer_key : string ->
       consumer_secret : string ->
       unit ->
-      (request_token, error) Sociaml_oauth_client.Result.t Lwt.t
+      (request_token, error) Result.t Lwt.t
   
   val fetch_access_token :
       access_uri : Uri.t ->
       request_token : request_token ->
       verifier : string ->
-      (access_token, error) Sociaml_oauth_client.Result.t Lwt.t
+      (access_token, error) Result.t Lwt.t
       
   val do_get_request :
       ?uri_parameters : (string * string) list ->
@@ -41,7 +41,7 @@ module type S = sig
       uri : Uri.t ->
       access_token : access_token ->
       unit ->
-      (string, error) Sociaml_oauth_client.Result.t Lwt.t
+      (string, error) Result.t Lwt.t
       
   val do_post_request :
       ?uri_parameters : (string * string) list ->
@@ -50,13 +50,13 @@ module type S = sig
       uri : Uri.t ->
       access_token : access_token ->
       unit ->
-      (string, error) Sociaml_oauth_client.Result.t Lwt.t
+      (string, error) Result.t Lwt.t
   
 end
 
 module Make
     (Clock : Sociaml_oauth_client.S.CLOCK)
-    (Client : Cohttp_lwt.Client)
+    (Client : Cohttp_lwt.S.Client)
     (MAC : Sociaml_oauth_client.S.MAC)
     (Random : Sociaml_oauth_client.S.RANDOM) : S = struct
      
@@ -80,14 +80,12 @@ module Make
     token_secret : string;
   }
       
-  exception Authorization_failed of int * string
-      
-  module R = Sociaml_oauth_client.Result
+  module R = Result
   module Sign = Signature.Make(Clock)(MAC)(Random)
   module Util = Sociaml_oauth_client.Util.Make(Random)
   
   module Code = Cohttp.Code
-  module Body = Cohttp_lwt_body
+  module Body = Cohttp_lwt.Body
   module Header = Cohttp.Header
   module Response = Cohttp.Response
   

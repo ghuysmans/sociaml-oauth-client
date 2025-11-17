@@ -1,0 +1,2 @@
+(library (name sociaml_oauth_client)
+ (libraries base64 str))
