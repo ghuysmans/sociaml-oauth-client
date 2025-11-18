@@ -1,4 +1,16 @@
 module type S = sig
+  val sign :
+      ?timestamp : int ->
+      ?nonce : string ->
+      ?body_parameters : (string * string) list ->
+      ?callback : Uri.t  ->
+      ?token : string ->
+      ?token_secret : string ->
+      consumer_key : string ->
+      consumer_secret : string ->
+      method' : [ | `POST | `GET ] ->
+      Uri.t ->
+      (string * string) list
   val add_authorization_header : 
       ?timestamp : int ->
       ?nonce : string ->
@@ -22,8 +34,8 @@ module Make
   open Cohttp
   
   module Util = Sociaml_oauth_client.Util.Make(Random)
-  
-  let add_authorization_header
+
+  let sign
       ?(timestamp = Clock.time () |> int_of_float)
       ?(nonce = Util.generate_nonce 32)
       ?body_parameters: (parameters: (string * string) list = [])
@@ -32,9 +44,9 @@ module Make
       ?token_secret: (token_secret: string = "")
       ~consumer_key: consumer_key
       ~consumer_secret: consumer_secret
-      ~method': (method': [ | `POST | `GET ])
-      ~uri: uri
-      headers = 
+      ~method': (method': [ | `POST | `GET ]) (* FIXME *)
+      uri
+      = 
  
     let oauth_params = [
         "oauth_consumer_key", consumer_key;
@@ -72,19 +84,26 @@ module Make
           (match i with | 0 -> "" | _ -> Util.pct_encode "&") |+
           (Util.pct_encode key) |+ (Util.pct_encode "=") |+ (Util.pct_encode value))) (0, hmac)
     in  
-      
-    let rbuf = Buffer.create 16 in
-    let buf_add = Buffer.add_string rbuf in
-    buf_add "OAuth oauth_signature=\"";
-    MAC.result hmac |> Base64.encode_exn |> Util.pct_encode |> buf_add;
-    buf_add "\"";
-    List.iter (fun (key, value) ->
-        buf_add ",";
-        buf_add key;
-        buf_add "=\"";
-        buf_add (Util.pct_encode value);
-        buf_add "\"";     
-      ) oauth_params;
-    Header.add headers "Authorization" (Buffer.contents rbuf)
-  
+    let s = MAC.result hmac |> Base64.encode_exn |> Util.pct_encode in
+    ("oauth_signature", s) :: oauth_params
+   
+  let add_authorization_header
+      ?timestamp ?nonce
+      ?body_parameters
+      ?callback
+      ?token ?token_secret
+      ~consumer_key ~consumer_secret
+      ~method' ~uri
+      headers = 
+    sign
+      ?timestamp ?nonce
+      ?body_parameters
+      ?callback
+      ?token ?token_secret
+      ~consumer_key ~consumer_secret
+      ~method' uri |>
+    List.map (fun (key, value) -> key ^ "=\"" ^ Util.pct_encode value ^ "\"") |>
+    String.concat "," |>
+    (^) "OAuth " |>
+    Header.add headers "Authorization"
 end
