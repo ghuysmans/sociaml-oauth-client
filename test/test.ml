@@ -27,5 +27,5 @@ let test method' signature =
   ;"oauth_token", token]
 
 let () =
-  assert (test `POST "r6%2FTJjbCOr97%2F%2BUU0NsvSne7s5g%3D");
-  assert (test `GET "bYT5CMsGcbgUdFHObYMEfcx6bsw%3D");
+  assert (test `POST "r6/TJjbCOr97/+UU0NsvSne7s5g=");
+  assert (test `GET "bYT5CMsGcbgUdFHObYMEfcx6bsw=");

@@ -54,7 +54,7 @@ module Make
         "oauth_signature_method", "HMAC-SHA1";
         "oauth_timestamp", timestamp |> string_of_int;
       ] |> List.append (match callback with
-      | Some callback -> ["oauth_callback", Uri.to_string callback |> Util.pct_encode;]
+      | Some callback -> ["oauth_callback", Uri.to_string callback;]
       | None -> []) |> List.append (match token with
       | Some token -> ["oauth_token", token;]
       | None -> [])    
@@ -84,7 +84,7 @@ module Make
           (match i with | 0 -> "" | _ -> Util.pct_encode "&") |+
           (Util.pct_encode key) |+ (Util.pct_encode "=") |+ (Util.pct_encode value))) (0, hmac)
     in  
-    let s = MAC.result hmac |> Base64.encode_exn |> Util.pct_encode in
+    let s = MAC.result hmac |> Base64.encode_exn in
     ("oauth_signature", s) :: oauth_params
    
   let add_authorization_header
