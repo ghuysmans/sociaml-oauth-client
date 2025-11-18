@@ -1,6 +1,6 @@
-module F = Sociaml_oauth_client_v1_0a.Signature.Make
+open Sociaml_oauth_client_v1_0a
 module P = Sociaml_oauth_client_posix
-module S = F (P.Clock) (P.MAC_SHA1) (P.Random)
+module S = Signature.Make (P.Clock) (P.MAC_SHA1) (P.Random)
 
 let uri =
   Uri.of_string "http://example.com/request?b5=%3D%253D&a3=a&c%40=&a2=r%20b"
@@ -15,7 +15,7 @@ let test method' signature =
   List.sort compare @@ S.sign
     ~timestamp
     ~nonce
-    ~body_parameters:["c2",""; "a3","2 q"]
+    ~body:(Signature.Form ["c2",""; "a3","2 q"])
     ~token ~token_secret
     ~consumer_key ~consumer_secret
     ~method' uri =

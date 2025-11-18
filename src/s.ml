@@ -14,11 +14,17 @@ module type CLOCK = sig
   val gmtime : float -> tm
 end
 
-module type MAC = sig
+module type HASH = sig
+  type p
   type t
-  val init : string -> t
+  val init : p -> t
   val add_string : t -> string -> t
   val result : t -> string
+end
+
+module type MAC = sig
+  include HASH with type p := string
+  module Digest : HASH with type p := unit
 end
 
 module type RANDOM = sig

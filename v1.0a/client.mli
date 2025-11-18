@@ -45,7 +45,7 @@ module type S = sig
       
   val do_post_request :
       ?uri_parameters : (string * string) list ->
-      ?body_parameters : (string * string) list ->
+      ?body : Signature.body ->
       ?expect : Cohttp.Code.status_code ->
       uri : Uri.t ->
       access_token : access_token ->

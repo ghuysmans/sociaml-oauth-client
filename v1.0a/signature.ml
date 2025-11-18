@@ -1,8 +1,12 @@
+type body =
+  | Form of (string * string) list
+  | XML of string
+
 module type S = sig
   val sign :
       ?timestamp : int ->
       ?nonce : string ->
-      ?body_parameters : (string * string) list ->
+      ?body : body ->
       ?callback : Uri.t  ->
       ?token : string ->
       ?token_secret : string ->
@@ -14,7 +18,7 @@ module type S = sig
   val add_authorization_header : 
       ?timestamp : int ->
       ?nonce : string ->
-      ?body_parameters : (string * string) list ->
+      ?body : body ->
       ?callback : Uri.t  ->
       ?token : string ->
       ?token_secret : string ->
@@ -38,7 +42,7 @@ module Make
   let sign
       ?(timestamp = Clock.time () |> int_of_float)
       ?(nonce = Util.generate_nonce 32)
-      ?body_parameters: (parameters: (string * string) list = [])
+      ?(body = Form [])
       ?callback: (callback: Uri.t option)
       ?token: (token: string option)
       ?token_secret: (token_secret: string = "")
@@ -57,7 +61,17 @@ module Make
       | Some callback -> ["oauth_callback", Uri.to_string callback;]
       | None -> []) |> List.append (match token with
       | Some token -> ["oauth_token", token;]
-      | None -> [])    
+      | None -> []) |> List.append (match body with
+      | Form _ -> []
+      | XML x -> ["oauth_body_hash",
+        let h = MAC.Digest.(add_string (init ()) x) in
+        Base64.encode_exn (MAC.Digest.result h)])
+    in
+
+    let parameters =
+      match body with
+      | Form l -> l
+      | XML _ -> []
     in
     
     let uri_without_query = Uri.with_query uri [] in
@@ -89,7 +103,7 @@ module Make
    
   let add_authorization_header
       ?timestamp ?nonce
-      ?body_parameters
+      ?body
       ?callback
       ?token ?token_secret
       ~consumer_key ~consumer_secret
@@ -97,7 +111,7 @@ module Make
       headers = 
     sign
       ?timestamp ?nonce
-      ?body_parameters
+      ?body
       ?callback
       ?token ?token_secret
       ~consumer_key ~consumer_secret

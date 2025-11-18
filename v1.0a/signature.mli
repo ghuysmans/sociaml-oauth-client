@@ -1,8 +1,12 @@
+type body =
+  | Form of (string * string) list
+  | XML of string
+
 module type S = sig
   val sign :
       ?timestamp : int ->
       ?nonce : string ->
-      ?body_parameters : (string * string) list ->
+      ?body : body ->
       ?callback : Uri.t  ->
       ?token : string ->
       ?token_secret : string ->
@@ -14,7 +18,7 @@ module type S = sig
   val add_authorization_header : 
       ?timestamp : int ->
       ?nonce : string ->
-      ?body_parameters : (string * string) list ->
+      ?body : body ->
       ?callback : Uri.t  ->
       ?token : string ->
       ?token_secret : string ->

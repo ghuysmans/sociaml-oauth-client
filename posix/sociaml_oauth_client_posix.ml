@@ -43,7 +43,16 @@ module MAC_SHA1 : S.MAC = struct
   let add_string hmac s = hmac#add_string s; hmac
   
   let result hmac = hmac#result
-  
+
+  module Digest = struct
+    type t = Cryptokit.hash
+
+    let init = Hash.sha1
+
+    let add_string h s = h#add_string s; h
+
+    let result h = h#result
+  end
 end
 
 module Random : S.RANDOM = struct

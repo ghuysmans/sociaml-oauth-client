@@ -45,7 +45,7 @@ module type S = sig
       
   val do_post_request :
       ?uri_parameters : (string * string) list ->
-      ?body_parameters : (string * string) list ->
+      ?body : Signature.body ->
       ?expect : Cohttp.Code.status_code ->
       uri : Uri.t ->
       access_token : access_token ->
@@ -135,7 +135,7 @@ module Make
       ~verifier =
         
     let header = Sign.add_authorization_header
-        ~body_parameters: [("oauth_verifier", verifier)] 
+        ~body: (Signature.Form [("oauth_verifier", verifier)])
         ~token: request_token.token 
         ~token_secret: request_token.token_secret
         ~consumer_key: request_token.consumer_key
@@ -195,7 +195,7 @@ module Make
     
   let do_post_request
       ?uri_parameters: (uri_parameters: (string * string) list = []) 
-      ?body_parameters: (body_parameters: (string * string) list = [])
+      ?(body: Signature.body = Signature.Form [])
       ?expect: (expect = `OK)
       ~uri
       ~access_token
@@ -204,26 +204,32 @@ module Make
     let uri_with_query = (Uri.add_query_params' uri uri_parameters) in
     
     let header = Sign.add_authorization_header
-        ~body_parameters: (body_parameters |> List.map (fun (k,v) -> (k, Util.pct_encode v)))
+        ~body
         ~token: access_token.token 
         ~token_secret: access_token.token_secret
         ~consumer_key: access_token.consumer_key
         ~consumer_secret: access_token.consumer_secret
         ~method': `POST
         ~uri: uri_with_query
-        (Header.init_with "Content-Type" "application/x-www-form-urlencoded")
+        (Header.init_with "Content-Type" @@
+         match body with
+         | Form _ -> "application/x-www-form-urlencoded"
+         | XML _ -> "application/xml; charset=UTF-8")
     in
     let body = 
-      let buf = Buffer.create 16 in
-      List.iteri (fun i (k, v) ->
-        (match i with | 0 -> () | _ -> Buffer.add_char buf '&');
-        Buffer.add_string buf (Util.pct_encode k);
-        Buffer.add_char buf '=';
-        Buffer.add_string buf (Util.pct_encode v)) body_parameters;
-      Buffer.contents buf |> Body.of_string
+      Body.of_string @@
+      match body with
+      | XML x -> x
+      | Form body_parameters ->
+        let buf = Buffer.create 16 in
+        List.iteri (fun i (k, v) ->
+          (match i with | 0 -> () | _ -> Buffer.add_char buf '&');
+          Buffer.add_string buf (Util.pct_encode k);
+          Buffer.add_char buf '=';
+          Buffer.add_string buf (Util.pct_encode v)) body_parameters;
+        Buffer.contents buf
     in
-    
-    Client.post ~body:body ~headers:header ~chunked:false uri_with_query >>= fun (resp, body) ->
+    Client.post ~body ~headers:header ~chunked:false uri_with_query >>= fun (resp, body) ->
     (match Response.status resp with
     | `Code c -> c
     | c -> Code.code_of_status c) |> (function
